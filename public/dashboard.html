@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="id"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Beranda - EduCapy</title><link rel="stylesheet" href="/css/style.css">
+</head><body>
+<div id="nav"></div>
+<main class="container">
+  <h1 id="hello"></h1>
+  <div class="grid" id="shortcuts"></div>
+</main>
+<script src="/js/api.js"></script>
+<script>
+const user = initPage();
+if (user) {
+  const label = { student: 'siswa', teacher: 'guru', admin: 'administrator' }[user.role];
+  document.getElementById('hello').textContent = `Halo, ${user.name} (${label})`;
+  document.getElementById('shortcuts').innerHTML = NAV[user.role].slice(1)
+    .map(([href, text]) => `<a href="${href}">${esc(text)}</a>`).join('');
+}
+</script></body></html>

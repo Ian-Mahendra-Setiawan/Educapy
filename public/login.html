@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="id"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Masuk - EduCapy</title><link rel="stylesheet" href="/css/style.css">
+</head><body>
+<main class="container"><div class="panel narrow">
+  <h1>Masuk ke EduCapy</h1>
+  <div id="msg" class="msg" role="alert"></div>
+  <form id="f">
+    <label for="email">Email</label><input id="email" type="email" autocomplete="username" required>
+    <label for="password">Password</label><input id="password" type="password" autocomplete="current-password" required>
+    <p><button type="submit">Masuk</button></p>
+  </form>
+  <p class="hint">Belum punya akun siswa? <a href="/register.html">Daftar di sini</a>.</p>
+</div></main>
+<script src="/js/api.js"></script>
+<script>
+document.getElementById('f').onsubmit = async (e) => {
+  e.preventDefault();
+  try {
+    const d = await API.post('/api/auth/login', {
+      email: document.getElementById('email').value,
+      password: document.getElementById('password').value });
+    localStorage.setItem('token', d.token);
+    localStorage.setItem('user', JSON.stringify(d.user));
+    location.href = '/dashboard.html';
+  } catch (err) { showMsg(document.getElementById('msg'), err.message); }
+};
+</script></body></html>
