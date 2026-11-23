@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="id"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Daftar siswa - EduCapy</title><link rel="stylesheet" href="/css/style.css">
+</head><body>
+<main class="container"><div class="panel narrow">
+  <h1>Daftar sebagai siswa</h1>
+  <div id="msg" class="msg" role="alert"></div>
+  <form id="f">
+    <label for="name">Nama lengkap</label><input id="name" autocomplete="name" required maxlength="100">
+    <label for="email">Email</label><input id="email" type="email" autocomplete="username" required>
+    <label for="password">Password</label><input id="password" type="password" autocomplete="new-password" required maxlength="255" aria-describedby="rules">
+    <p class="hint" id="rules">8-255 karakter, minimal 1 simbol, 1 angka, 1 huruf kecil, dan 1 huruf kapital.</p>
+    <p><button type="submit">Buat akun</button></p>
+  </form>
+  <p class="hint">Sudah punya akun? <a href="/login.html">Masuk</a>.</p>
+</div></main>
+<script src="/js/api.js"></script>
+<script>
+document.getElementById('f').onsubmit = async (e) => {
+  e.preventDefault();
+  const msg = document.getElementById('msg');
+  try {
+    await API.post('/api/auth/register', {
+      name: document.getElementById('name').value,
+      email: document.getElementById('email').value,
+      password: document.getElementById('password').value });
+    showMsg(msg, 'Akun dibuat. Mengalihkan ke halaman masuk...', 'ok');
+    setTimeout(() => (location.href = '/login.html'), 1200);
+  } catch (err) { showMsg(msg, err.message); }
+};
+</script></body></html>
