@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="id"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Pengguna - EduCapy</title><link rel="stylesheet" href="/css/style.css">
+</head><body>
+<div id="nav"></div>
+<main class="container">
+  <h1>Kelola akun guru dan siswa</h1>
+  <div id="msg" class="msg" role="alert"></div>
+  <section class="panel">
+    <h2 id="formTitle">Tambah akun</h2>
+    <form id="f">
+      <div class="row">
+        <div><label for="name">Nama</label><input id="name" required maxlength="100"></div>
+        <div><label for="email">Email</label><input id="email" type="email" required></div>
+        <div><label for="role">Peran</label>
+          <select id="role"><option value="teacher">Guru</option><option value="student">Siswa</option></select></div>
+        <div><label for="password">Password</label><input id="password" type="password" autocomplete="new-password" maxlength="255"></div>
+      </div>
+      <p class="hint" id="pwHint">8-255 karakter, minimal 1 simbol, 1 angka, 1 huruf kecil, 1 huruf kapital.</p>
+      <p><button type="submit" id="save">Simpan akun</button> <button type="button" class="ghost" id="cancel" hidden>Batal ubah</button></p>
+    </form>
+  </section>
+  <label for="filter">Tampilkan</label>
+  <select id="filter" style="max-width:200px"><option value="">Semua</option><option value="teacher">Guru</option><option value="student">Siswa</option></select>
+  <div class="table-wrap"><table><thead><tr><th>Nama</th><th>Email</th><th>Peran</th><th>Aksi</th></tr></thead><tbody id="rows"></tbody></table></div>
+</main>
+<script src="/js/api.js"></script>
+<script>
+const me = initPage(['admin']);
+const $ = (id) => document.getElementById(id);
+const ROLE = { admin: 'Admin', teacher: 'Guru', student: 'Siswa' };
+let list = [], editId = null;
+
+async function load() {
+  const q = $('filter').value ? '?role=' + $('filter').value : '';
+  list = await API.get('/api/users' + q);
+  $('rows').innerHTML = list.length ? list.map((u) => `<tr>
+    <td>${esc(u.name)}</td><td>${esc(u.email)}</td><td>${ROLE[u.role]}</td>
+    <td>${u.role === 'admin' ? '-' : `<button class="ghost" data-edit="${u.id}">Ubah</button>
+      <button class="danger" data-del="${u.id}">Hapus akun</button>`}</td></tr>`).join('')
+    : '<tr><td colspan="4" class="empty">Belum ada akun. Tambahkan akun pertama lewat formulir di atas.</td></tr>';
+}
+function resetForm() {
+  editId = null; $('f').reset(); $('role').disabled = false; $('cancel').hidden = true;
+  $('formTitle').textContent = 'Tambah akun'; $('password').required = true;
+  $('pwHint').textContent = '8-255 karakter, minimal 1 simbol, 1 angka, 1 huruf kecil, 1 huruf kapital.';
+}
+$('f').onsubmit = async (e) => {
+  e.preventDefault();
+  const body = { name: $('name').value, email: $('email').value, role: $('role').value, password: $('password').value };
+  try {
+    if (editId) { if (!body.password) delete body.password; await API.put('/api/users/' + editId, body); showMsg($('msg'), 'Akun diperbarui', 'ok'); }
+    else { await API.post('/api/users', body); showMsg($('msg'), 'Akun dibuat', 'ok'); }
+    resetForm(); await load();
+  } catch (err) { showMsg($('msg'), err.message); }
+};
+$('cancel').onclick = resetForm;
+$('filter').onchange = load;
+$('rows').onclick = async (e) => {
+  const edit = e.target.dataset.edit, del = e.target.dataset.del;
+  if (edit) {
+    const u = list.find((x) => x.id == edit); editId = u.id;
+    $('name').value = u.name; $('email').value = u.email; $('role').value = u.role; $('role').disabled = true;
+    $('password').required = false; $('cancel').hidden = false; $('formTitle').textContent = 'Ubah akun';
+    $('pwHint').textContent = 'Kosongkan password jika tidak ingin menggantinya.';
+    $('name').focus();
+  }
+  if (del && confirm('Hapus akun ini beserta seluruh jadwal les terkait?')) {
+    try { await API.del('/api/users/' + del); showMsg($('msg'), 'Akun dihapus', 'ok'); await load(); }
+    catch (err) { showMsg($('msg'), err.message); }
+  }
+};
+if (me) load();
+</script></body></html>
