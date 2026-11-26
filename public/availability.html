@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="id"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Ketersediaan - EduCapy</title><link rel="stylesheet" href="/css/style.css">
+</head><body>
+<div id="nav"></div>
+<main class="container">
+  <h1>Jam ketersediaan mengajar</h1>
+  <div id="msg" class="msg" role="alert"></div>
+  <section class="panel">
+    <form id="f" class="row">
+      <div><label for="day">Hari</label><select id="day"></select></div>
+      <div><label for="start">Jam mulai</label><select id="start"></select></div>
+      <div><button type="submit">Tambah jam mengajar</button></div>
+    </form>
+    <p class="hint">Hanya Senin sampai Jumat, 08:00 sampai 20:00. Setiap slot berdurasi 1 jam.</p>
+  </section>
+  <div class="table-wrap"><table><thead><tr><th>Hari</th><th>Jam</th><th>Aksi</th></tr></thead><tbody id="rows"></tbody></table></div>
+</main>
+<script src="/js/api.js"></script>
+<script>
+const me = initPage(['teacher']);
+const $ = (id) => document.getElementById(id);
+$('day').innerHTML = [1, 2, 3, 4, 5].map((d) => `<option value="${d}">${DAYS[d]}</option>`).join('');
+$('start').innerHTML = Array.from({ length: 12 }, (_, i) => { const h = String(i + 8).padStart(2, '0'); return `<option value="${h}:00">${h}:00 - ${String(i + 9).padStart(2, '0')}:00</option>`; }).join('');
+async function load() {
+  const rows = await API.get('/api/availability/me');
+  $('rows').innerHTML = rows.length ? rows.map((r) => `<tr><td>${DAYS[r.day_of_week]}</td>
+    <td>${r.start_time} - ${r.end_time}</td>
+    <td><button class="danger" data-del="${r.id}">Hapus slot</button></td></tr>`).join('')
+    : '<tr><td colspan="3" class="empty">Belum ada slot. Tambahkan jam mengajar pertama Anda.</td></tr>';
+}
+$('f').onsubmit = async (e) => {
+  e.preventDefault();
+  try { await API.post('/api/availability', { day_of_week: $('day').value, start_time: $('start').value });
+    showMsg($('msg'), 'Slot ditambahkan', 'ok'); await load();
+  } catch (err) { showMsg($('msg'), err.message); }
+};
+$('rows').onclick = async (e) => {
+  if (!e.target.dataset.del) return;
+  try { await API.del('/api/availability/' + e.target.dataset.del); showMsg($('msg'), 'Slot dihapus', 'ok'); await load(); }
+  catch (err) { showMsg($('msg'), err.message); }
+};
+if (me) load();
+</script></body></html>
