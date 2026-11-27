@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="id"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Mata pelajaran - EduCapy</title><link rel="stylesheet" href="/css/style.css">
+</head><body>
+<div id="nav"></div>
+<main class="container">
+  <h1>Mata pelajaran dan jenjang yang saya ajarkan</h1>
+  <div id="msg" class="msg" role="alert"></div>
+  <p class="hint">Centang kombinasi yang bersedia Anda ajarkan, lalu simpan.</p>
+  <div class="table-wrap"><table><thead id="head"></thead><tbody id="rows"></tbody></table></div>
+  <p><button type="button" id="save">Simpan pilihan</button></p>
+</main>
+<script src="/js/api.js"></script>
+<script>
+const me = initPage(['teacher']);
+const $ = (id) => document.getElementById(id);
+async function load() {
+  const [{ subjects, levels }, mine] = await Promise.all([API.get('/api/teaching/subjects'), API.get('/api/teaching/me')]);
+  const chosen = new Set(mine.map((m) => `${m.subject_id}:${m.level}`));
+  $('head').innerHTML = `<tr><th>Mata pelajaran</th>${levels.map((l) => `<th>${l}</th>`).join('')}</tr>`;
+  $('rows').innerHTML = subjects.map((s) => `<tr><td>${esc(s.name)}</td>${levels.map((l) =>
+    `<td><input type="checkbox" style="width:auto" aria-label="${esc(s.name)} ${l}" data-s="${s.id}" data-l="${l}" ${chosen.has(`${s.id}:${l}`) ? 'checked' : ''}></td>`).join('')}</tr>`).join('');
+}
+$('save').onclick = async () => {
+  const items = [...document.querySelectorAll('input[data-s]:checked')].map((c) => ({ subject_id: Number(c.dataset.s), level: c.dataset.l }));
+  try { const r = await API.put('/api/teaching/me', { items }); showMsg($('msg'), `Tersimpan: ${r.saved} kombinasi`, 'ok'); }
+  catch (err) { showMsg($('msg'), err.message); }
+};
+if (me) load().catch((err) => showMsg($('msg'), err.message));
+</script></body></html>
